@@ -14,12 +14,23 @@ enum Commands {
     Swap,
     Over,
     Num(Value),
-    Custom(Vec<u8>)
+    Custom(Vec<u8>),
+    RefCmd(usize)
 }
 
+// My answer to the `alloc-attack` test - two HashMaps
+// The `commands` vec holds all commands created and `latest` vec holds the latest version of each
+//
+// This solves two issues -
+// 1. If a command has embedded commands (ie `: bar foo ;`), a call to `bar` will always reference `foo` 
+// at the time of `bar`'s creation.
+// 2. The embedded command doesn't have to be expanded within (ie all of `foo`'s commands don't have to expand into `bar`).
+// This lowers the overall memory usage because in `bar` there's only a key (`Commands::RefCmd(usize)`) to the value in 
+// the `commands` HashMap.
 pub struct Forth {
     stack: Vec<Value>,
-    commands: HashMap<Commands, Vec<Commands>>
+    commands: HashMap<usize, Vec<Commands>>,
+    latest: HashMap<Commands, usize>
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -34,7 +45,8 @@ impl Forth {
     pub fn new() -> Forth {
         Self {
             stack: Vec::new(),
-            commands: HashMap::new()
+            commands: HashMap::new(),
+            latest: HashMap::new()
         }
     }
 
@@ -43,8 +55,7 @@ impl Forth {
     }
 
     pub fn eval(&mut self, input: &'static str) -> Result {
-        let mut input = self.to_commands(input)?;
-
+        let mut input = self.get_commands(input)?;
 
         while let Some(cmd) = input.pop_front() {
 
@@ -74,13 +85,13 @@ impl Forth {
                 },
                 Commands::Dup => {
                     if let Some(num) = self.stack.last() {
-                        self.stack.push(num.clone())
+                        self.stack.push(*num)
                     } else {
                         return Err(Error::StackUnderflow)
                     }
                 },
                 Commands::Drop => {
-                    if let None = self.stack.pop() {
+                    if self.stack.pop().is_none() {
                         return Err(Error::StackUnderflow)
                     }
                 },
@@ -106,12 +117,20 @@ impl Forth {
                         return Err(Error::StackUnderflow)
                     }
 
-                    let target = self.stack[n - 2].clone();
+                    let target = self.stack[n - 2];
 
                     self.stack.push(target)
                 },
-                Commands::Custom(c) => {
-                    let mut cmd = self.commands.get(&Commands::Custom(c)).unwrap().clone();
+                c @ Commands::Custom(_) => {
+                    let key = self.latest.get(&c).unwrap();
+                    let mut cmd = self.commands.get(key).unwrap().clone();
+
+                    while let Some(c) = cmd.pop() {
+                        input.push_front(c)
+                    }
+                }
+                Commands::RefCmd(key) => {
+                    let mut cmd = self.commands.get(&key).unwrap().clone();
 
                     while let Some(c) = cmd.pop() {
                         input.push_front(c)
@@ -123,31 +142,38 @@ impl Forth {
         Ok(())
     }
 
-    fn add_new_cmd(&mut self, input: &mut std::str::Split<'static, &str>) -> Result {
+    fn add_new_cmd(&mut self, input: &mut std::str::Split<'static, char>) -> Result {
         let cmd_name = if let Some(n) = input.next() {
-            n.to_lowercase().as_bytes().to_vec()
+            let name = n.to_lowercase().as_bytes().to_vec();
+
+            if name[0].is_ascii_digit() {
+                return Err(Error::InvalidWord)
+            }
+
+            Commands::Custom(name)
         } else {
             return Err(Error::InvalidWord)
         };
 
-        if cmd_name[0].is_ascii_digit() {
-            return Err(Error::InvalidWord)
-        }
-
         let mut cmds: Vec<Commands> = vec![];
 
-        while let Some(n) = input.next() {
+        for n in input.by_ref() {
             if n == ";" {
-                self.commands.insert(Commands::Custom(cmd_name), cmds);
+                // Easiest way to create unique id - just increment by 1
+                let new_id = self.commands.len() + 1;
+                self.commands.insert(new_id, cmds);
+                self.latest.insert(cmd_name, new_id);
+
                 return Ok(())
             }
-            
+
             match n.try_into() {
                 Ok(cmd) => cmds.push(cmd),
                 Err(e) => {
-                    if let Some(cmd) = self.contains_cmd(n) {
-                        let extras = self.commands.get(&cmd).unwrap();
-                        cmds.extend(extras.clone());
+                    if let Some((_, key)) = self.contains_cmd(n) {
+                        // This way the embedded command will point to the correct invocation without
+                        // having to expand and increase memory allocation
+                        cmds.push(Commands::RefCmd(key))
                     } else {
                         return Err(e)
                     }
@@ -158,8 +184,8 @@ impl Forth {
         Err(Error::InvalidWord)
     }
 
-    fn to_commands(&mut self, input: &'static str) -> std::result::Result<VecDeque<Commands>, Error> {
-        let mut input = input.split(" ");
+    fn get_commands(&mut self, input: &'static str) -> std::result::Result<VecDeque<Commands>, Error> {
+        let mut input = input.split(' ');
         let mut cmds: VecDeque<Commands> = VecDeque::new();
 
         while let Some(i) = input.next() {
@@ -168,7 +194,7 @@ impl Forth {
                 continue;
             }
 
-            if let Some(c) = self.contains_cmd(i) {
+            if let Some((c, _)) = self.contains_cmd(i) {
                 cmds.push_back(c);
                 continue
             }
@@ -180,14 +206,10 @@ impl Forth {
         Ok(cmds)
     }
 
-    fn contains_cmd(&self, cmd: &str) -> Option<Commands> {
+    fn contains_cmd(&self, cmd: &str) -> Option<(Commands, usize)> {
         let key = Commands::Custom(cmd.to_lowercase().as_bytes().to_vec());
 
-        if self.commands.contains_key(&key) {
-            Some(key)
-        } else {
-            None
-        }
+        self.latest.get(&key).map(|k| (key, *k))
     }
 }
 
