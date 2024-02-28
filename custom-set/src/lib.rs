@@ -1,43 +1,70 @@
 #[derive(Debug, PartialEq, Eq)]
 pub struct CustomSet<T> {
-    // We fake using T here, so the compiler does not complain that
-    // "parameter `T` is never used". Delete when no longer needed.
-    phantom: std::marker::PhantomData<T>,
+    items: Vec<T>
 }
 
-impl<T> CustomSet<T> {
+impl<T: PartialEq + Clone> CustomSet<T> {
     pub fn new(_input: &[T]) -> Self {
-        todo!();
+        let mut items: Vec<T> = _input.to_vec();
+        items.dedup();
+
+        Self { items }
     }
 
     pub fn contains(&self, _element: &T) -> bool {
-        todo!();
+        self.items.contains(_element)
     }
 
     pub fn add(&mut self, _element: T) {
-        todo!();
+        if !self.items.contains(&_element) {
+            self.items.push(_element);
+        }
     }
 
     pub fn is_subset(&self, _other: &Self) -> bool {
-        todo!();
+        for item in self.items.iter() {
+            if !_other.contains(item) {
+                return false
+            }
+        }
+        true
     }
 
     pub fn is_empty(&self) -> bool {
-        todo!();
+        self.items.is_empty()
     }
 
     pub fn is_disjoint(&self, _other: &Self) -> bool {
-        todo!();
+        for item in self.items.iter() {
+            if _other.contains(item) {
+                return false
+            }
+        }
+        true
     }
 
     #[must_use]
     pub fn intersection(&self, _other: &Self) -> Self {
-        todo!();
+        let mut items: Vec<T> = vec![];
+
+        for item in self.items.iter() {
+            if _other.contains(item) {
+                items.push(item.clone())
+            }
+        };
+
+        Self { items }
     }
 
     #[must_use]
     pub fn difference(&self, _other: &Self) -> Self {
-        todo!();
+        let items = self.items
+            .iter()
+            .filter(|&i| !_other.contains(&i))
+            .map(|i| i.to_owned())
+            .collect();
+
+        Self { items }
     }
 
     #[must_use]
