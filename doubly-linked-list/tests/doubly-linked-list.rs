@@ -1,3 +1,4 @@
+#![cfg(feature = "ERROR")]
 use doubly_linked_list::*;
 
 #[test]

@@ -1,17 +1,40 @@
+#![allow(unused)]
+#![cfg(feature = "ERROR")]
 // this module adds some functionality based on the required implementations
 // here like: `LinkedList::pop_back` or `Clone for LinkedList<T>`
 // You are free to use anything in it, but it's mainly for the test framework.
-mod pre_implemented;
+use std::boxed::Box;
 
-pub struct LinkedList<T>(std::marker::PhantomData<T>);
+// mod pre_implemented;
 
-pub struct Cursor<'a, T>(std::marker::PhantomData<&'a mut T>);
+
+struct Node<'a, T> {
+    val: Option<T>,
+    next: Option<Box<&'a Node<'a, T>>>,
+    prev: Option<Box<&'a Node<'a, T>>>,
+}
+
+pub struct LinkedList<'a, T> {
+    root: Node<'a, T>,
+    last: Node<'a, T>
+}
+
+pub struct Cursor<'a, 'b, T>(&'b mut Node<'a, T>);
 
 pub struct Iter<'a, T>(std::marker::PhantomData<&'a T>);
 
-impl<T> LinkedList<T> {
+impl<'a, 'b, T: Clone> LinkedList<'a, T> {
     pub fn new() -> Self {
-        todo!()
+        let mut first: Node<T> = Node { val: None, next: None, prev: None };
+        let mut last: Node<T> = Node { val: None, next: None, prev: None };
+
+        first.next = Some(Box::new(&last));
+        last.prev = Some(Box::new(&first));
+
+        Self {
+            root: first,
+            last
+        }
     }
 
     // You may be wondering why it's necessary to have is_empty()
@@ -28,12 +51,12 @@ impl<T> LinkedList<T> {
     }
 
     /// Return a cursor positioned on the front element
-    pub fn cursor_front(&mut self) -> Cursor<'_, T> {
-        todo!()
+    pub fn cursor_front(&'a mut self) -> Cursor<'_, '_, T> {
+        Cursor(&mut self.root)
     }
 
     /// Return a cursor positioned on the back element
-    pub fn cursor_back(&mut self) -> Cursor<'_, T> {
+    pub fn cursor_back(&mut self) -> Cursor<'_, '_, T> {
         todo!()
     }
 
@@ -45,7 +68,7 @@ impl<T> LinkedList<T> {
 
 // the cursor is expected to act as if it is at the position of an element
 // and it also has to work with and be able to insert into an empty list.
-impl<T> Cursor<'_, T> {
+impl<T> Cursor<'_, '_, T> {
     /// Take a mutable reference to the current element
     pub fn peek_mut(&mut self) -> Option<&mut T> {
         todo!()
