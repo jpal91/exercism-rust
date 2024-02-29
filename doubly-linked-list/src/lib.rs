@@ -1,39 +1,31 @@
 #![allow(unused)]
-#![cfg(feature = "ERROR")]
 // this module adds some functionality based on the required implementations
 // here like: `LinkedList::pop_back` or `Clone for LinkedList<T>`
 // You are free to use anything in it, but it's mainly for the test framework.
-use std::boxed::Box;
+use std::{borrow::BorrowMut, boxed::Box};
 
 // mod pre_implemented;
 
 
-struct Node<'a, T> {
-    val: Option<T>,
-    next: Option<Box<&'a Node<'a, T>>>,
-    prev: Option<Box<&'a Node<'a, T>>>,
+struct Node<T>(T);
+
+pub struct LinkedList<T> {
+    list: Vec<Node<T>>,
+    idx: usize
 }
 
-pub struct LinkedList<'a, T> {
-    root: Node<'a, T>,
-    last: Node<'a, T>
+pub struct Cursor<'a, T> {
+    nodes: &'a mut Vec<Node<T>>,
+    idx: usize
 }
 
-pub struct Cursor<'a, 'b, T>(&'b mut Node<'a, T>);
+pub struct Iter<'a, T>(&'a Vec<Node<T>>, usize, usize);
 
-pub struct Iter<'a, T>(std::marker::PhantomData<&'a T>);
-
-impl<'a, 'b, T: Clone> LinkedList<'a, T> {
+impl<'a, T: Clone> LinkedList<T> {
     pub fn new() -> Self {
-        let mut first: Node<T> = Node { val: None, next: None, prev: None };
-        let mut last: Node<T> = Node { val: None, next: None, prev: None };
-
-        first.next = Some(Box::new(&last));
-        last.prev = Some(Box::new(&first));
-
         Self {
-            root: first,
-            last
+            list: vec![],
+            idx: 0
         }
     }
 
@@ -43,48 +35,73 @@ impl<'a, 'b, T: Clone> LinkedList<'a, T> {
     // whereas is_empty() is almost always cheap.
     // (Also ask yourself whether len() is expensive for LinkedList)
     pub fn is_empty(&self) -> bool {
-        todo!()
+        self.list.is_empty()
     }
 
     pub fn len(&self) -> usize {
-        todo!()
+        self.list.len()
     }
 
     /// Return a cursor positioned on the front element
-    pub fn cursor_front(&'a mut self) -> Cursor<'_, '_, T> {
-        Cursor(&mut self.root)
+    pub fn cursor_front(&'a mut self) -> Cursor<'_, T> {
+        Cursor {
+            nodes: &mut self.list,
+            idx: 0
+        }
     }
 
     /// Return a cursor positioned on the back element
-    pub fn cursor_back(&mut self) -> Cursor<'_, '_, T> {
-        todo!()
+    pub fn cursor_back(&mut self) -> Cursor<'_, T> {
+        let last = self.len() - 1;
+        Cursor {
+            nodes: &mut self.list,
+            idx: last
+        }
     }
 
     /// Return an iterator that moves from front to back
     pub fn iter(&self) -> Iter<'_, T> {
-        todo!()
+        Iter(&self.list, 0, self.len())
     }
 }
 
 // the cursor is expected to act as if it is at the position of an element
 // and it also has to work with and be able to insert into an empty list.
-impl<T> Cursor<'_, '_, T> {
+impl<T> Cursor<'_, T> {
     /// Take a mutable reference to the current element
     pub fn peek_mut(&mut self) -> Option<&mut T> {
-        todo!()
+        if self.nodes.is_empty() {
+            return None
+        }
+        Some(&mut self.nodes[self.idx].0)
     }
 
     /// Move one position forward (towards the back) and
     /// return a reference to the new position
     #[allow(clippy::should_implement_trait)]
     pub fn next(&mut self) -> Option<&mut T> {
-        todo!()
+        if self.nodes.is_empty() {
+            return None
+        }
+        self.idx = (self.idx + 1) % self.nodes.len();
+
+        Some(&mut self.nodes[self.idx].0)
     }
 
     /// Move one position backward (towards the front) and
     /// return a reference to the new position
     pub fn prev(&mut self) -> Option<&mut T> {
-        todo!()
+        if self.nodes.is_empty() {
+            return None
+        }
+        
+        if self.idx == 0 {
+            self.idx = self.nodes.len() - 1;
+        } else {
+            self.idx -= 1;
+        }
+
+        Some(&mut self.nodes[self.idx].0)
     }
 
     /// Remove and return the element at the current position and move the cursor
@@ -107,6 +124,13 @@ impl<'a, T> Iterator for Iter<'a, T> {
     type Item = &'a T;
 
     fn next(&mut self) -> Option<&'a T> {
-        todo!()
+        if self.1 == self.2 {
+            return None
+        }
+
+        let item = Some(&self.0[self.1].0);
+        self.1 += 1;
+
+        item
     }
 }
