@@ -1,4 +1,3 @@
-#![cfg(feature = "ERROR")]
 use doubly_linked_list::*;
 
 // counter of allocated bytes
@@ -8,7 +7,6 @@ static ALLOCATED: AtomicUsize = AtomicUsize::new(0);
 // test that removing an element via the cursor deallocates memory
 // does not check if the destructor is run
 #[test]
-#[ignore]
 fn drop_no_leak_when_removing_single_element() {
     let mut list = (0..10).collect::<LinkedList<_>>();
 
@@ -17,8 +15,10 @@ fn drop_no_leak_when_removing_single_element() {
 
     let allocated_before = ALLOCATED.load(SeqCst);
     cursor.take();
+    // drop(a);
     let allocated_after = ALLOCATED.load(SeqCst);
-
+    // drop(cursor);
+    // println!("{:?}", list.list);
     // only check that something is deallocated
     // we can't know the exact size of the node structure
     assert!(allocated_before > allocated_after);

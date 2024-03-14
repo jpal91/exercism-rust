@@ -2,26 +2,31 @@
 // this module adds some functionality based on the required implementations
 // here like: `LinkedList::pop_back` or `Clone for LinkedList<T>`
 // You are free to use anything in it, but it's mainly for the test framework.
+#![allow(unused)]
 use std::{borrow::BorrowMut, boxed::Box};
 
-// mod pre_implemented;
+mod pre_implemented;
 
 
-struct Node<T>(T);
+#[derive(Debug, Clone)]
+pub struct Node<T>(T);
 
+#[derive(Clone)]
 pub struct LinkedList<T> {
-    list: Vec<Node<T>>,
+    pub list: Vec<Node<T>>,
     idx: usize
 }
 
+#[derive(Debug)]
 pub struct Cursor<'a, T> {
-    nodes: &'a mut Vec<Node<T>>,
+    pub nodes: &'a mut Vec<Node<T>>,
     idx: usize
 }
 
+#[derive(Debug)]
 pub struct Iter<'a, T>(&'a Vec<Node<T>>, usize, usize);
 
-impl<'a, T: Clone> LinkedList<T> {
+impl<'a, T> LinkedList<T> {
     pub fn new() -> Self {
         Self {
             list: vec![],
@@ -52,7 +57,7 @@ impl<'a, T: Clone> LinkedList<T> {
 
     /// Return a cursor positioned on the back element
     pub fn cursor_back(&mut self) -> Cursor<'_, T> {
-        let last = self.len() - 1;
+        let last = self.len().checked_sub(1).unwrap_or_default();
         Cursor {
             nodes: &mut self.list,
             idx: last
@@ -83,9 +88,14 @@ impl<T> Cursor<'_, T> {
         if self.nodes.is_empty() {
             return None
         }
-        self.idx = (self.idx + 1) % self.nodes.len();
+        let next_idx = self.next_idx();
 
-        Some(&mut self.nodes[self.idx].0)
+        if next_idx == self.idx {
+            None
+        } else {
+            self.idx = next_idx;
+            Some(&mut self.nodes[next_idx].0)
+        }
     }
 
     /// Move one position backward (towards the front) and
@@ -94,29 +104,50 @@ impl<T> Cursor<'_, T> {
         if self.nodes.is_empty() {
             return None
         }
-        
-        if self.idx == 0 {
-            self.idx = self.nodes.len() - 1;
-        } else {
-            self.idx -= 1;
-        }
+        let next_idx = self.prev_idx();
 
-        Some(&mut self.nodes[self.idx].0)
+        if next_idx == self.idx {
+            None
+        } else {
+            self.idx = next_idx;
+            Some(&mut self.nodes[next_idx].0)
+        }
     }
 
     /// Remove and return the element at the current position and move the cursor
     /// to the neighboring element that's closest to the back. This can be
     /// either the next or previous position.
     pub fn take(&mut self) -> Option<T> {
-        todo!()
+        // let item = 
+        self.nodes.remove(self.idx);
+        self.idx = self.idx.min(self.last());
+        // Some(item.0)
+        None
     }
 
     pub fn insert_after(&mut self, _element: T) {
-        todo!()
+        if self.idx == self.last() {
+            self.nodes.push(Node(_element));
+        } else {
+            self.nodes.insert(self.next_idx(), Node(_element));
+        }
     }
 
     pub fn insert_before(&mut self, _element: T) {
-        todo!()
+        self.nodes.insert(self.idx, Node(_element));
+        self.idx = self.next_idx();
+    }
+
+    fn last(&self) -> usize {
+        self.nodes.len().checked_sub(1).unwrap_or_default()
+    }
+
+    fn next_idx(&self) -> usize {
+        (self.idx + 1).min(self.last())
+    }
+
+    fn prev_idx(&self) -> usize {
+        self.idx.checked_sub(1).unwrap_or_default()
     }
 }
 

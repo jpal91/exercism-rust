@@ -1,4 +1,3 @@
-#![cfg(feature = "ERROR")]
 use doubly_linked_list::*;
 
 // counter of allocated bytes
@@ -8,7 +7,6 @@ static ALLOCATED: AtomicUsize = AtomicUsize::new(0);
 // test that all memory is deallocated
 // does not check if the destructor is run
 #[test]
-#[ignore]
 fn drop_no_leaks() {
     let allocated_before = ALLOCATED.load(SeqCst);
     let list = (0..10).collect::<LinkedList<_>>();
