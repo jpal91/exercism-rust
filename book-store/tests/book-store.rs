@@ -7,7 +7,6 @@ fn only_a_single_book() {
 }
 
 #[test]
-#[ignore]
 fn two_of_the_same_book() {
     let input = &[2, 2];
     let output = book_store::lowest_price(input);
@@ -16,7 +15,6 @@ fn two_of_the_same_book() {
 }
 
 #[test]
-#[ignore]
 fn empty_basket() {
     let input = &[];
     let output = book_store::lowest_price(input);
@@ -25,7 +23,6 @@ fn empty_basket() {
 }
 
 #[test]
-#[ignore]
 fn two_different_books() {
     let input = &[1, 2];
     let output = book_store::lowest_price(input);
@@ -34,7 +31,6 @@ fn two_different_books() {
 }
 
 #[test]
-#[ignore]
 fn three_different_books() {
     let input = &[1, 2, 3];
     let output = book_store::lowest_price(input);
@@ -43,7 +39,6 @@ fn three_different_books() {
 }
 
 #[test]
-#[ignore]
 fn four_different_books() {
     let input = &[1, 2, 3, 4];
     let output = book_store::lowest_price(input);
@@ -52,7 +47,6 @@ fn four_different_books() {
 }
 
 #[test]
-#[ignore]
 fn five_different_books() {
     let input = &[1, 2, 3, 4, 5];
     let output = book_store::lowest_price(input);
@@ -61,7 +55,6 @@ fn five_different_books() {
 }
 
 #[test]
-#[ignore]
 fn two_groups_of_four_is_cheaper_than_group_of_five_plus_group_of_three() {
     let input = &[1, 1, 2, 2, 3, 3, 4, 5];
     let output = book_store::lowest_price(input);
@@ -70,7 +63,6 @@ fn two_groups_of_four_is_cheaper_than_group_of_five_plus_group_of_three() {
 }
 
 #[test]
-#[ignore]
 fn two_groups_of_four_is_cheaper_than_groups_of_five_and_three() {
     let input = &[1, 1, 2, 3, 4, 4, 5, 5];
     let output = book_store::lowest_price(input);
@@ -79,7 +71,6 @@ fn two_groups_of_four_is_cheaper_than_groups_of_five_and_three() {
 }
 
 #[test]
-#[ignore]
 fn group_of_four_plus_group_of_two_is_cheaper_than_two_groups_of_three() {
     let input = &[1, 1, 2, 2, 3, 4];
     let output = book_store::lowest_price(input);
@@ -88,7 +79,6 @@ fn group_of_four_plus_group_of_two_is_cheaper_than_two_groups_of_three() {
 }
 
 #[test]
-#[ignore]
 fn two_each_of_first_four_books_and_one_copy_each_of_rest() {
     let input = &[1, 1, 2, 2, 3, 3, 4, 4, 5];
     let output = book_store::lowest_price(input);
@@ -97,7 +87,6 @@ fn two_each_of_first_four_books_and_one_copy_each_of_rest() {
 }
 
 #[test]
-#[ignore]
 fn two_copies_of_each_book() {
     let input = &[1, 1, 2, 2, 3, 3, 4, 4, 5, 5];
     let output = book_store::lowest_price(input);
@@ -106,7 +95,6 @@ fn two_copies_of_each_book() {
 }
 
 #[test]
-#[ignore]
 fn three_copies_of_first_book_and_two_each_of_remaining() {
     let input = &[1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 1];
     let output = book_store::lowest_price(input);
@@ -115,7 +103,6 @@ fn three_copies_of_first_book_and_two_each_of_remaining() {
 }
 
 #[test]
-#[ignore]
 fn three_each_of_first_two_books_and_two_each_of_remaining_books() {
     let input = &[1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 1, 2];
     let output = book_store::lowest_price(input);
@@ -124,7 +111,6 @@ fn three_each_of_first_two_books_and_two_each_of_remaining_books() {
 }
 
 #[test]
-#[ignore]
 fn four_groups_of_four_are_cheaper_than_two_groups_each_of_five_and_three() {
     let input = &[1, 1, 2, 2, 3, 3, 4, 5, 1, 1, 2, 2, 3, 3, 4, 5];
     let output = book_store::lowest_price(input);
@@ -133,7 +119,6 @@ fn four_groups_of_four_are_cheaper_than_two_groups_each_of_five_and_three() {
 }
 
 #[test]
-#[ignore]
 fn check_that_groups_of_four_are_created_properly_even_when_there_are_more_groups_of_three_than_groups_of_five(
 ) {
     let input = &[
@@ -145,7 +130,6 @@ fn check_that_groups_of_four_are_created_properly_even_when_there_are_more_group
 }
 
 #[test]
-#[ignore]
 fn one_group_of_one_and_four_is_cheaper_than_one_group_of_two_and_three() {
     let input = &[1, 1, 2, 3, 4];
     let output = book_store::lowest_price(input);
@@ -154,7 +138,6 @@ fn one_group_of_one_and_four_is_cheaper_than_one_group_of_two_and_three() {
 }
 
 #[test]
-#[ignore]
 fn one_group_of_one_and_two_plus_three_groups_of_four_is_cheaper_than_one_group_of_each_size() {
     let input = &[1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5];
     let output = book_store::lowest_price(input);
